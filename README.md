@@ -47,7 +47,7 @@ By calculating slippage, traders can make more informed decisions, especially in
 
 ## Demo
 
-[Live Demo]([https://yourgithubusername.github.io/yourproject/](https://cfnetworks.github.io/binanceslippagecalculator/))
+[Live Demo](https://cfnetworks.github.io/binanceslippagecalculator/)
 
 ## Technologies Used
 
@@ -71,4 +71,4 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 ## Author
 
-Developed by [Christian Fiebich]([https://github.com/yourusername](https://github.com/cfnetworks/)).
+Developed by [Christian Fiebich](https://github.com/cfnetworks/).
