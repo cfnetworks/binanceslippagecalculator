@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head> 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Binance Slippage Calculator</title>
@@ -26,9 +26,10 @@
             font-weight: bold;
         }
         input, select, button {
-            width: 100%;
+            width: 95%;
             padding-top: 10px;
             padding-bottom: 10px;
+            padding-left: 10px;
             margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -49,6 +50,7 @@
             background: #f1f1f1;
             border: 1px solid #ccc;
             border-radius: 5px;
+            display:none;
         }
 		footer {
 			text-align: center;
@@ -66,15 +68,14 @@
 	</style>
 </head>
 <body>
-
 <div class="container">
     <h1>Binance Slippage Calculator</h1>
     <form id="slippageForm">
         <label for="symbol">Trading Pair:</label>
-        <input type="text" id="symbol" placeholder="Enter trading pair (e.g., BTCUSDT)" value="DOTEUR" required>
+        <input type="text" id="symbol" placeholder="Enter trading pair (e.g., BTCUSDT)" value="BTCUSDT" required>
         
         <label for="orderSize">Order Size:</label>
-        <input type="number" id="orderSize" placeholder="Enter order size in base currency" value="1000" required>
+        <input type="number" id="orderSize" placeholder="Enter order size in base currency" value="1" required>
         
         <label for="side">Side:</label>
         <select id="side">
@@ -84,21 +85,11 @@
         
         <button type="button" id="calculateBtn">Calculate Slippage</button>
     </form>
-
     <div class="output" id="output"></div>
-	
-	<div class="extra-info" id="extraInfo">
-		<!-- Additional data will be displayed here -->
-	</div>
-	
 </div>
-
 <script>
 // Binance API endpoint for order book
 const BINANCE_API_URL = 'https://api.binance.com/api/v3/depth';
-
-// Binance API endpoint for 24hr ticker stats
-const BINANCE_TICKER_URL = 'https://api.binance.com/api/v3/ticker/24hr';
 
 /**
  * Fetches order book data for a given trading pair from Binance.
@@ -113,34 +104,6 @@ async function fetchOrderBook(symbol, limit = 1000) {
         throw new Error(`Error fetching order book: ${response.statusText}`);
     }
     return await response.json();
-}
-
-/**
- * Fetches 24hr ticker stats for a given trading pair from Binance.
- * @param {string} symbol - Trading pair, e.g., 'BTCUSDT'.
- * @returns {Promise<object>} - The ticker data.
- */
-async function fetchTickerStats(symbol) {
-    const url = `${BINANCE_TICKER_URL}?symbol=${symbol}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Error fetching ticker stats: ${response.statusText}`);
-    }
-    return await response.json();
-}
-
-/**
- * Updates the extra information (last close price, bid price, ask price).
- * @param {object} tickerStats - The ticker stats data.
- */
-function updateExtraInfo(tickerStats) {
-    const extraInfoDiv = document.getElementById('extraInfo');
-    extraInfoDiv.innerHTML = `
-        <h3>Additional Information</h3>
-        <p>Last Close Price: <strong>${parseFloat(tickerStats.lastPrice).toFixed(6)}</strong></p>
-        <p>Bid Price: <strong>${parseFloat(tickerStats.bidPrice).toFixed(6)}</strong></p>
-        <p>Ask Price: <strong>${parseFloat(tickerStats.askPrice).toFixed(6)}</strong></p>
-    `;
 }
 
 /**
@@ -178,7 +141,6 @@ function calculateSlippage(orderBookSide, orderSize, side) {
     const effectivePrice = weightedPriceSum / orderSize;
     const marketPrice = parseFloat(orderBookSide[0][0]);
     const slippage = ((effectivePrice - marketPrice) / marketPrice) * 100;
-
     return { slippage, effectivePrice };
 }
 
@@ -190,17 +152,13 @@ function calculateSlippage(orderBookSide, orderSize, side) {
  */
 async function main(symbol, orderSize, side) {
     const outputDiv = document.getElementById('output');
-    const extraInfoDiv = document.getElementById('extraInfo');
     outputDiv.innerHTML = 'Calculating...';
-    extraInfoDiv.innerHTML = '';
 
     try {
         // Fetch order book data
         const orderBook = await fetchOrderBook(symbol);
         const orderBookSide = side === 'buy' ? orderBook.asks : orderBook.bids;
-
-        // Fetch ticker stats data
-        const tickerStats = await fetchTickerStats(symbol);
+        const currentDateTime = new Date();
 
         // Update slippage data
         const result = calculateSlippage(orderBookSide, orderSize, side);
@@ -208,14 +166,12 @@ async function main(symbol, orderSize, side) {
             outputDiv.innerHTML = `<p style="color: red;">${result.error}</p>`;
         } else {
             outputDiv.innerHTML = `
+                <p>Timestamp: <strong>${currentDateTime.toISOString()}</strong></p>
+                <p>Symbol: <strong>${symbol}</strong></p>
                 <p>Order Size: <strong>${orderSize}</strong></p>
-                <p>Effective Price: <strong>${result.effectivePrice.toFixed(6)}</strong></p>
-                <p>Slippage: <strong>${result.slippage.toFixed(6)}%</strong></p>
+                <p>Slippage: <strong>${Math.abs(result.slippage).toFixed(8)}%</strong></p>
             `;
         }
-
-        // Update additional information
-        updateExtraInfo(tickerStats);
     } catch (error) {
         outputDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
@@ -226,19 +182,17 @@ document.getElementById('calculateBtn').addEventListener('click', () => {
     const symbol = document.getElementById('symbol').value.trim();
     const orderSize = parseFloat(document.getElementById('orderSize').value);
     const side = document.getElementById('side').value;
+    document.getElementById('output').style.display = 'block';
 
     if (!symbol || isNaN(orderSize) || orderSize <= 0) {
         alert('Please provide valid inputs.');
         return;
     }
-
     main(symbol.toUpperCase(), orderSize, side);
 });
 </script>
-
 <footer>
     <p>View the source code on <a href="https://github.com/cfnetworks/binanceslippagecalculator" target="_blank">GitHub</a>.</p>
 </footer>
-
 </body>
 </html>
